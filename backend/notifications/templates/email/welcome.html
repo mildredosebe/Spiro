@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to Spiro!</title>
+    <style>
+        body { font-family: sans-serif; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #007bff; margin: 0; }
+        .content { margin-bottom: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; border-top: 1px solid #eaeaea; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="font-family: 'Segoe UI', sans-serif; font-size: 36px; font-weight: 800; color: #0b2e59; font-style: italic; letter-spacing: -0.05em; text-transform: lowercase; margin-bottom: 10px;">spiro</div>
+            <h1>Welcome to Spiro!</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{ user.username }},</p>
+            <p>Thank you for signing up for Spiro! We're thrilled to have you on board.</p>
+            <p>You can now explore our catalog, place orders, and track your deliveries directly from your account.</p>
+            <p>If you have any questions or need help getting started, feel free to reach out to our support team.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {% now "Y" %} Spiro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

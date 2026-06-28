@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Order Notification</title>
+    <style>
+        body { font-family: sans-serif; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0b2e59; padding-bottom: 15px; }
+        .header h1 { color: #0b2e59; margin: 0; }
+        .content { margin-bottom: 20px; }
+        .order-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; border-top: 1px solid #eaeaea; padding-top: 20px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="font-family: 'Segoe UI', sans-serif; font-size: 36px; font-weight: 800; color: #0b2e59; font-style: italic; letter-spacing: -0.05em; text-transform: lowercase; margin-bottom: 10px;">kitas</div>
+            <h1>New Order Received</h1>
+        </div>
+        <div class="content">
+            <p>Admin Notification,</p>
+            <p>A new order has been successfully placed and paid.</p>
+            
+            <div class="order-details">
+                <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                <p><strong>Customer:</strong> {{ order.user.email }} ({{ order.user.first_name }} {{ order.user.last_name }})</p>
+                <p><strong>Total Amount:</strong> KSh {{ order.total_amount }}</p>
+                
+                <h4>Items Ordered:</h4>
+                <ul style="padding-left: 20px; margin-bottom: 15px;">
+                {% for item in order.items.all %}
+                    <li>{{ item.quantity }}x <strong>{{ item.product.name }}</strong> - KSh {{ item.unit_price }}</li>
+                {% endfor %}
+                </ul>
+
+                <p><strong>Shipping Address:</strong><br>
+                {{ order.shipping_full_name }}<br>
+                {{ order.shipping_address }}, {{ order.shipping_city }} {{ order.shipping_postal_code }}
+                </p>
+
+                <p><strong>Delivery Preference:</strong><br>
+                {% if order.is_scheduled %}
+                    <span style="color: #0b2e59; font-weight: bold; background: #e6f0fa; padding: 3px 8px; border-radius: 4px;">Scheduled: {{ order.scheduled_delivery_date }} ({{ order.scheduled_delivery_slot.name }})</span>
+                {% else %}
+                    <span style="color: #d35400; font-weight: bold; background: #fdf2e9; padding: 3px 8px; border-radius: 4px;">Immediate Delivery</span>
+                {% endif %}
+                </p>
+            </div>
+            
+            <p>Please check the admin dashboard to process this order.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {% now "Y" %} Kitas Admin Alerts.</p>
+        </div>
+    </div>
+</body>
+</html>

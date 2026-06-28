@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation</title>
+    <style>
+        body { font-family: sans-serif; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #28a745; margin: 0; }
+        .content { margin-bottom: 20px; }
+        .order-details { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .footer { text-align: center; font-size: 0.9em; color: #777; border-top: 1px solid #eaeaea; padding-top: 20px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="font-family: 'Segoe UI', sans-serif; font-size: 36px; font-weight: 800; color: #0b2e59; font-style: italic; letter-spacing: -0.05em; text-transform: lowercase; margin-bottom: 10px;">spiro</div>
+            <h1>Order Confirmation</h1>
+        </div>
+        <div class="content">
+            <p>Hi {{ order.user.username }},</p>
+            <p>Great news! We have successfully received your payment for order <strong>#{{ order.id }}</strong>.</p>
+            
+            <div class="order-details">
+                <h3>Order Summary</h3>
+                <p><strong>Total Amount:</strong> KSh {{ order.total_amount }}</p>
+                
+                <h4>Items Ordered:</h4>
+                <ul style="padding-left: 20px; margin-bottom: 15px;">
+                {% for item in order.items.all %}
+                    <li>{{ item.quantity }}x <strong>{{ item.product.name }}</strong> - KSh {{ item.unit_price }}</li>
+                {% endfor %}
+                </ul>
+
+                <p><strong>Shipping Address:</strong><br>
+                {{ order.shipping_full_name }}<br>
+                {{ order.shipping_address }}, {{ order.shipping_city }} {{ order.shipping_postal_code }}
+                </p>
+
+                <p><strong>Delivery Time:</strong><br>
+                {% if order.is_scheduled %}
+                    Scheduled for <strong>{{ order.scheduled_delivery_date }}</strong> 
+                    ({{ order.scheduled_delivery_slot.name }})
+                {% else %}
+                    Immediate Delivery (As soon as possible)
+                {% endif %}
+                </p>
+            </div>
+            
+            <p>We're currently preparing your items for shipment. We will notify you once your order is on its way!</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {% now "Y" %} Spiro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: spiro_postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: spiro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    ports:
+      - "5434:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d spiro"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: spiro_redis
+
+    restart: unless-stopped
+
+    ports:
+      - "6380:6379"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: spiro_backend
+
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    environment:
+      RUN_MIGRATIONS: "true"
+
+    volumes:
+      - ./backend:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+
+    ports:
+      - "127.0.0.1:8002:8000"
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    command:
+      [
+        "gunicorn",
+        "config.wsgi:application",
+        "--bind",
+        "0.0.0.0:8000",
+        "--workers",
+        "3",
+        "--timeout",
+        "120"
+      ]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+
+    container_name: spiro_frontend
+
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:3002:80"
+
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  media_volume:

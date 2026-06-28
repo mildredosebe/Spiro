@@ -1,0 +1,16 @@
+node_modules
+.venv
+
+.vscode
+
+dist/
+backend/db.sqlite3
+**/__pycache__/
+*.pyc
+config.bat
+
+
+
+backend/.env.prod
+backend/.env.dev
+backend/.env.example
