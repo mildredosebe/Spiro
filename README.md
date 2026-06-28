@@ -1,8 +1,3 @@
-# E-commerce platform UI design
-
-This is a code bundle for E-commerce platform UI design. The original project is available at https://www.figma.com/design/ixtgylYyuKl0LTt4W2FgLF/E-commerce-platform-UI-design.
-
-The project is split into two directories: `frontend` and `backend`.
 
 ## Running the frontend
 
