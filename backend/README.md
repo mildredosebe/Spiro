@@ -1,4 +1,4 @@
-# Ozzie Backend (Django + DRF)
+#  Backend (Django + DRF)
 
 Backend API for authentication, catalog, cart, and orders.
 
