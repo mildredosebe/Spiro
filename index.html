@@ -1,0 +1,182 @@
+<title>BMS Bench Tester</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: single-column control console — status, command pad, live log */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#eef1f6; --line:#d7dde6;
+  --fg:#1a2330; --muted:#5b6472; --accent:#1f5fa6; --accent-fg:#ffffff;
+  --ok:#2f7d4f; --okbg:#e6f3ec; --warn:#b5651d; --danger:#c0392b; --dangerbg:#fbe3df;
+  --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:'Inter',system-ui,-apple-system,sans-serif;
+  --radius:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151b; --surface:#1a2029; --surface-2:#222a35; --line:#333d4a;
+  --fg:#e7ecf2; --muted:#93a0b0; --accent:#5aa0e6; --accent-fg:#0b1016;
+  --ok:#5fcf8e; --okbg:#143324; --warn:#e0a35a; --danger:#ef6a56; --dangerbg:#3a1a16;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#11151b; --surface:#1a2029; --surface-2:#222a35; --line:#333d4a;
+  --fg:#e7ecf2; --muted:#93a0b0; --accent:#5aa0e6; --accent-fg:#0b1016;
+  --ok:#5fcf8e; --okbg:#143324; --warn:#e0a35a; --danger:#ef6a56; --dangerbg:#3a1a16;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:24px 40px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:.9rem;margin:2px 0 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;
+  padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.pill.on{background:var(--okbg);color:var(--ok)} .pill.on .dot{background:var(--ok)}
+button{font-family:var(--sans);font-size:.92rem;font-weight:600;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--fg);
+  padding:11px 14px;border-radius:10px;min-width:0}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+button.on{background:var(--okbg);color:var(--ok);border-color:transparent}
+button.off{background:var(--dangerbg);color:var(--danger);border-color:transparent}
+button:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.h{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.banner{background:var(--dangerbg);color:var(--danger);border:1px solid var(--danger);
+  border-radius:10px;padding:10px 13px;font-size:.84rem;font-weight:600}
+.hint{background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;
+  padding:11px 13px;font-size:.84rem;color:var(--muted)}
+input[type=text]{font-family:var(--mono);font-size:.9rem;flex:1;min-width:0;
+  padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
+.chk{display:flex;align-items:center;gap:7px;font-size:.84rem;color:var(--muted)}
+#log{font-family:var(--mono);font-size:.8rem;background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;padding:12px;height:260px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.le{margin:0 0 4px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.le .t{color:var(--muted)} .le.tx{color:var(--accent)} .le.rx{color:var(--ok)} .le.err{color:var(--danger)}
+.cmdnote{font-size:.74rem;color:var(--muted);margin:2px 0 0;font-family:var(--mono)}
+.foot{font-size:.76rem;color:var(--muted);text-align:center}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>BMS Bench Tester</h1>
+    <p class="sub">Talks to the Fute / Meishun BMS over Bluetooth — service FFF0, write FFF2, notify FFF3.</p>
+  </header>
+
+  <div class="banner">⚠ Bench use only. Never toggle discharge while the bike is moving or under load.</div>
+
+  <div class="card row" style="justify-content:space-between">
+    <span id="status" class="pill"><span class="dot"></span>Disconnected</span>
+    <div class="row">
+      <button id="connect" class="primary">Connect</button>
+      <button id="disconnect" disabled>Disconnect</button>
+    </div>
+  </div>
+
+  <div id="unsupported" class="hint" hidden>
+    This needs <strong>Web Bluetooth</strong>. Open this page in <strong>Chrome on Android</strong>
+    (or desktop Chrome/Edge) — it does not work in iPhone browsers or inside in-app browsers.
+  </div>
+
+  <div class="card">
+    <label class="h">Commands</label>
+    <div class="grid" style="margin-top:10px">
+      <button id="disOn"  class="on"  disabled>Discharge ON</button>
+      <button id="disOff" class="off" disabled>Discharge OFF</button>
+      <button id="readMain" disabled>Read main data</button>
+      <button id="readStat" disabled>Read status</button>
+    </div>
+    <p class="cmdnote" id="cmdnote">ON 01 05 EA 6E FF 00 D9 FF&nbsp;&nbsp;·&nbsp;&nbsp;OFF 01 05 EA 6F FF 00 88 3F</p>
+  </div>
+
+  <div class="card">
+    <label class="h" for="hex">Send custom bytes (hex)</label>
+    <div class="row" style="margin-top:10px">
+      <input id="hex" type="text" placeholder="e.g. 01 03 00 00 00 2F" autocomplete="off" spellcheck="false">
+      <button id="send" disabled>Send</button>
+    </div>
+    <label class="chk" style="margin-top:9px"><input type="checkbox" id="autocrc" checked> append CRC-16 (Modbus) automatically</label>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:9px">
+      <label class="h">Live log</label>
+      <button id="clear" style="padding:6px 10px;font-size:.8rem">Clear</button>
+    </div>
+    <div id="log" aria-live="polite"></div>
+  </div>
+
+  <p class="foot">Each reply from the battery appears on FFF3 as raw hex. Share it back and we decode voltage, SOC, cells and temps.</p>
+</div>
+
+<script>
+const SERVICE=0xFFF0, CH_WRITE=0xFFF2, CH_NOTIFY=0xFFF3;
+const FR={ disOn:[0x01,0x05,0xEA,0x6E,0xFF,0x00,0xD9,0xFF],
+           disOff:[0x01,0x05,0xEA,0x6F,0xFF,0x00,0x88,0x3F] };
+let device=null, writeCh=null, notifyCh=null;
+
+const $=id=>document.getElementById(id);
+const hex=a=>Array.from(a,b=>b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+function crc16(bytes){let c=0xFFFF;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c&1)?(c>>1)^0xA001:c>>1;}return [c&0xFF,(c>>8)&0xFF];}
+
+function log(msg,cls){const d=document.createElement('div');d.className='le'+(cls?' '+cls:'');
+  const t=new Date().toLocaleTimeString();d.innerHTML='<span class="t">'+t+'</span>  '+msg;
+  const l=$('log');l.appendChild(d);l.scrollTop=l.scrollHeight;}
+
+function setConnected(on){
+  $('status').className='pill'+(on?' on':'');
+  $('status').innerHTML='<span class="dot"></span>'+(on?'Connected':'Disconnected');
+  ['disOn','disOff','readMain','readStat','send'].forEach(id=>$(id).disabled=!on);
+  $('disconnect').disabled=!on; $('connect').disabled=on;
+}
+
+async function connect(){
+  try{
+    log('Requesting device…');
+    device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[SERVICE]});
+    device.addEventListener('gattserverdisconnected',()=>{setConnected(false);log('Device disconnected','err');});
+    log('Connecting to '+(device.name||'device')+'…');
+    const server=await device.gatt.connect();
+    const svc=await server.getPrimaryService(SERVICE);
+    writeCh=await svc.getCharacteristic(CH_WRITE);
+    notifyCh=await svc.getCharacteristic(CH_NOTIFY);
+    await notifyCh.startNotifications();
+    notifyCh.addEventListener('characteristicvaluechanged',e=>{
+      const v=new Uint8Array(e.target.value.buffer);log('RX  '+hex(v),'rx');});
+    setConnected(true);
+    log('Connected. Notifications on FFF3 active.','rx');
+  }catch(err){log('Connect failed: '+err.message,'err');}
+}
+
+async function write(bytes){
+  if(!writeCh){log('Not connected','err');return;}
+  try{
+    const buf=Uint8Array.from(bytes);
+    if(writeCh.writeValueWithoutResponse) await writeCh.writeValueWithoutResponse(buf);
+    else await writeCh.writeValue(buf);
+    log('TX  '+hex(buf),'tx');
+  }catch(err){log('Send failed: '+err.message,'err');}
+}
+
+$('connect').onclick=connect;
+$('disconnect').onclick=()=>{try{device&&device.gatt.disconnect();}catch(e){}};
+$('disOn').onclick=()=>write(FR.disOn);
+$('disOff').onclick=()=>write(FR.disOff);
+$('readMain').onclick=()=>{const b=[0x01,0x03,0x00,0x00,0x00,0x2F];write(b.concat(crc16(b)));};
+$('readStat').onclick=()=>{const b=[0x01,0x01,0x00,0x00,0x00,0x50];write(b.concat(crc16(b)));};
+$('send').onclick=()=>{
+  const raw=($('hex').value.match(/[0-9a-fA-F]{2}/g)||[]).map(h=>parseInt(h,16));
+  if(!raw.length){log('No valid hex bytes','err');return;}
+  write($('autocrc').checked?raw.concat(crc16(raw)):raw);
+};
+$('hex').addEventListener('keydown',e=>{if(e.key==='Enter')$('send').click();});
+$('clear').onclick=()=>$('log').innerHTML='';
+
+if(!navigator.bluetooth){$('unsupported').hidden=false;$('connect').disabled=true;
+  log('Web Bluetooth not available in this browser.','err');}
+else{log('Ready. Tap Connect and pick your BMS.');}
+</script>
